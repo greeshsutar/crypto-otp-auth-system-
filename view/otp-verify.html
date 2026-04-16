@@ -19,7 +19,7 @@ async function verifyOTP() {
     error.innerText = "";
 
     let data = {
-        gmail: document.getElementById("gmail").value,
+        gmail:localStorage.getItem("verifyEmail"),
         otp: document.getElementById("otp").value
     };
 
@@ -29,7 +29,7 @@ async function verifyOTP() {
     }
 
     try {
-        let res = await fetch("http://localhost:3080/user/verify-otp", {
+        let res = await fetch("http://localhost:3080/user/otp-verify", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -38,7 +38,8 @@ async function verifyOTP() {
         });
 
         let result = await res.json();
-
+   
+          console.log(result)
         if (res.ok) {
             alert("OTP verified, now login");
 

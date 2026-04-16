@@ -47,15 +47,22 @@ form.addEventListener("submit", async function(e) {
         });
 
         const result = await res.json();
+     
 
-        if (res.ok) {
-            alert(result.message);
-           
-            form.reset();
-                window.location.href = "login.html";
-        } else {
-            errorEl.innerText = result.message; //  show backend error
-        }
+console.log(result); // ✅ keep this
+
+if (res.ok) {
+    alert(result.message);
+
+    // 🔥 STORE EMAIL
+    localStorage.setItem("verifyEmail", data.gmail);
+
+    form.reset();
+
+    window.location.href = "otp-verify.html";
+} else {
+    errorEl.innerText = result.message;
+}
 
     } catch (error) {
         console.error(error);
