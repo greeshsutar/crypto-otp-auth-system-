@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div>
+        <div><h1>Login</h1>
+        </div>
+        <form id="form">
+    <input id="email" type="email" placeholder="enter you email">
+    <input id="password" type="password" placeholder="enter you password">
+    <p id="error" style="color:red;"></p>
+    <button id="btn" type="submit">Submit</button>
+     
+        </form>
+
+    </div>
+<script>
+const form = document.getElementById("form");
+
+form.addEventListener("submit", async function(e){
+    e.preventDefault();
+
+    let errorEl = document.getElementById("error");
+    errorEl.innerText = "";
+
+    let data = {
+        gmail: document.getElementById("email").value,
+        password: document.getElementById("password").value
+    };
+
+    console.log(data);
+    // ✅ Basic validation
+    if (!data.gmail || !data.password) {
+        errorEl.innerText = "All fields are required";
+        return;
+    }
+
+    try{
+        let req = await fetch("http://localhost:3080/user/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await req.json();
+
+        if (req.ok) {
+            // 🔥 store token
+            localStorage.setItem("token", result.token);
+
+            alert("Login successful"); // ✅ show first
+
+            form.reset();
+
+            // 🔥 redirect after
+            window.location.href = "profile.html";
+
+        } else {
+            errorEl.innerText = result.message;
+        }
+
+    } catch(err){
+        console.log("Error in login", err);
+        errorEl.innerText = "Something went wrong";
+    }
+});
+</script>
+</body>
+</html>

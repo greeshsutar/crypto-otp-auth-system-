@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Profile</title>
+</head>
+<body>
+
+<h1>User Profile</h1>
+
+<div id="profile"></div>
+<button onclick="logout()">Logout</button>
+<script>
+async function getProfile() {
+  const token = localStorage.getItem("token");
+
+  // 🔐 check token
+  if (!token) {
+    alert("Please login first");
+    window.location.href = "login.html";
+    return;
+  }
+
+  document.getElementById("profile").innerText = "Loading...";
+
+  try {
+    const res = await fetch("http://localhost:3080/user/profile", {
+      method: "GET",
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    });
+
+    const data = await res.json();
+  console.log(data);
+    if (res.ok) {
+      document.getElementById("profile").innerHTML = `
+        <p>Name: ${data.name}</p>
+        <p>Email: ${data.gmail}</p>
+        <p>Mobile: ${data.mobileno}</p>
+      `;
+    } else {
+      alert("Unauthorized, please login again");
+      localStorage.removeItem("token");
+      window.location.href = "login.html";
+    }
+
+  } catch (err) {
+    console.log(err);
+    alert("Error loading profile");
+  }
+}
+
+function logout() {
+  localStorage.removeItem("token");
+  window.location.href = "login.html";
+}
+
+getProfile();
+</script>
+
+</body>
+</html>

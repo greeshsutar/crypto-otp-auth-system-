@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Signup</title>
+</head>
+<body>
+
+<div>
+    <h1>Signup</h1>
+
+    <form id="form">
+        <input id="name" type="text" placeholder="name" required>
+        <input id="lastname" type="text" placeholder="lastname" required>
+        <input id="gmail" type="email" placeholder="email" required>
+        <input id="mobileno" type="tel" placeholder="mobile number" required>
+        <input id="password" type="password" placeholder="password" required>
+          <p id="error" style="color:red;"></p>
+        <button type="submit">Submit</button>
+    </form>
+</div>
+
+<script>
+const form = document.getElementById("form");
+
+form.addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    let errorEl = document.getElementById("error");
+    errorEl.innerText = "";
+
+    const data = {
+        name: document.getElementById("name").value,
+        lastname: document.getElementById("lastname").value,
+        gmail: document.getElementById("gmail").value,
+        mobileno: document.getElementById("mobileno").value,
+        password: document.getElementById("password").value
+    };
+
+    try {
+        const res = await fetch("http://localhost:3080/user/signup", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+            alert(result.message);
+           
+            form.reset();
+                window.location.href = "login.html";
+        } else {
+            errorEl.innerText = result.message; //  show backend error
+        }
+
+    } catch (error) {
+        console.error(error);
+        errorEl.innerText = "Something went wrong";
+    }
+});
+</script>
+
+</body>
+</html>
