@@ -1,4 +1,4 @@
-const { createlogin,  updatelogin, reallogin, getProfile } = require("../controller/login.controller");
+const { createlogin,  reallogin, getProfile, verifyotp } = require("../controller/login.controller");
 
 const authMiddleware = require("../auth/auth");
 function Routing(app){
@@ -9,7 +9,7 @@ function Routing(app){
     // app.patch("/user/login/:id",updatelogin);
 
       app.get("/user/profile", authMiddleware,getProfile );
-
+      app.post("/user/otp-verify",verifyotp)
 
 }
 

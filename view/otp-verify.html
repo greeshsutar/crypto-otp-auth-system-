@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Enter OTP</h2>
+
+<input id="gmail" placeholder="enter your gmail">
+<input id="otp" placeholder="Enter OTP">
+
+<button onclick="verifyOTP()">Verify</button>
+
+<p id="error" style="color:red;"></p>
+
+<script>
+
+async function verifyOTP() {
+
+    let error = document.getElementById("error");
+    error.innerText = "";
+
+    let data = {
+        gmail: document.getElementById("gmail").value,
+        otp: document.getElementById("otp").value
+    };
+
+    if (!data.gmail || !data.otp) {
+        error.innerText = "All fields required";
+        return;
+    }
+
+    try {
+        let res = await fetch("http://localhost:3080/user/verify-otp", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        let result = await res.json();
+
+        if (res.ok) {
+            alert("OTP verified, now login");
+
+            window.location.href = "login.html";
+        } else {
+            error.innerText = result.message;
+        }
+
+    } catch (err) {
+        console.log(err);
+        error.innerText = "Something went wrong";
+    }
+}
+
+</script>
+
+</body>
+</html>

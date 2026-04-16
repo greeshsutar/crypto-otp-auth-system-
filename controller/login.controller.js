@@ -30,7 +30,7 @@ async function createlogin(req, res) {
             
         });
 
-        let mailling = transporter.sendMail({
+           await transporter.sendMail({
              from: process.env.EMAIL_USER,
             to: gmail,
             subject: "OTP Verification",
@@ -44,6 +44,40 @@ async function createlogin(req, res) {
         console.error(err);
         res.status(500).send({ message: "Server error" });
     }
+}
+async function verifyotp(req,res){
+    let {gmail,otp} =req.body;
+     
+  try{
+    
+    if(!otp || !gmail){
+        res.status(400).send({message:"otp and email not entered"})
+    }
+    let user= loginModel.findOne({gmail});
+    if(!user){
+        res.status(400).send({message:"user enter invalid gmail"});
+    }
+       if(!otp ==user.otp){
+         return res.status(400).send({ message: "Invalid OTP" });
+        }
+
+        if (user.otpExpires < Date.now()) {
+            return res.status(400).send({ message: "OTP expired" });
+        }
+       user.isVerified = true;
+        user.otp = null;
+        user.otpExpires = null;
+
+        await user.save();
+     res.status(20).send({ message: "OTP verified successfully" });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: "Server error" });
+    }
+
+
+
 }
 
 
@@ -134,4 +168,5 @@ module.exports = {
     reallogin,
     getProfile,   // ✅ updated
     // updatelogin
+    verifyotp
 };
