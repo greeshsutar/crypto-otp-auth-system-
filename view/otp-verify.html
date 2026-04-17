@@ -1,59 +1,131 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verify OTP — Verifi</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
 <body>
 
-<h2>Enter OTP</h2>
+<div class="split-layout">
 
-<input id="gmail" placeholder="enter your gmail">
-<input id="otp" placeholder="Enter OTP">
+  <!-- LEFT PANEL -->
+  <div class="split-left">
+    <div class="brand">
+      <div class="brand-icon">V</div>
+      <span class="brand-name">Verifi</span>
+    </div>
+    <div class="left-content">
+      <h2>Check your<br><span>inbox.</span></h2>
+      <p>We sent a 6-digit code to verify your identity. It expires in 5 minutes.</p>
+    </div>
+    <div class="steps">
+      <div class="step done">  <div class="step-num">✓</div><span class="step-label">Account created</span></div>
+      <div class="step active"><div class="step-num">2</div><span class="step-label">Verify via OTP</span></div>
+      <div class="step">       <div class="step-num">3</div><span class="step-label">Log in &amp; explore</span></div>
+    </div>
+  </div>
 
-<button onclick="verifyOTP()">Verify</button>
+  <!-- RIGHT PANEL -->
+  <div class="split-right">
+    <div class="form-wrap otp-center">
 
-<p id="error" style="color:red;"></p>
+      <div class="otp-icon">📩</div>
+      <p class="form-title">Enter your OTP</p>
+      <p class="form-sub" id="otpInfo">We sent a 6-digit code to your contact.</p>
+      <span class="email-chip" id="contactChip">—</span>
+
+      <div class="otp-boxes">
+        <input class="otp-input" type="text" maxlength="1" inputmode="numeric"/>
+        <input class="otp-input" type="text" maxlength="1" inputmode="numeric"/>
+        <input class="otp-input" type="text" maxlength="1" inputmode="numeric"/>
+        <input class="otp-input" type="text" maxlength="1" inputmode="numeric"/>
+        <input class="otp-input" type="text" maxlength="1" inputmode="numeric"/>
+        <input class="otp-input" type="text" maxlength="1" inputmode="numeric"/>
+      </div>
+
+      <p class="error-msg" id="error"></p>
+      <button class="btn-primary" id="verifyBtn" onclick="verifyOTP()">Verify OTP →</button>
+      <p class="timer">Code expires in <strong id="countdown">5:00</strong></p>
+      <p class="resend">Didn't receive it? <a href="Signup.html">Go back &amp; retry</a></p>
+
+    </div>
+  </div>
+
+</div>
 
 <script>
+  const type = localStorage.getItem("verifyType");
+  const contact = type === "email"
+    ? localStorage.getItem("verifyEmail")
+    : localStorage.getItem("verifyMobile");
 
-async function verifyOTP() {
+  document.getElementById("contactChip").innerText = contact || "—";
+  document.getElementById("otpInfo").innerText =
+    type === "email" ? "OTP sent to your email address." : "OTP sent to your mobile number.";
 
-    let error = document.getElementById("error");
-    error.innerText = "";
+  // OTP box auto-jump
+  const inputs = document.querySelectorAll(".otp-input");
+  inputs.forEach((inp, i) => {
+    inp.addEventListener("input", () => {
+      inp.value = inp.value.replace(/\D/g, "");
+      if (inp.value.length === 1) {
+        inp.classList.add("filled");
+        if (i < 5) inputs[i + 1].focus();
+      } else { inp.classList.remove("filled"); }
+    });
+    inp.addEventListener("keydown", (e) => {
+      if (e.key === "Backspace" && inp.value === "" && i > 0) {
+        inputs[i - 1].focus();
+        inputs[i - 1].classList.remove("filled");
+      }
+    });
+  });
 
-    let data = {
-        gmail:localStorage.getItem("verifyEmail"),
-        otp: document.getElementById("otp").value
-    };
+  // Countdown timer
+  let seconds = 300;
+  const timerEl = document.getElementById("countdown");
+  const interval = setInterval(() => {
+    seconds--;
+    const m = Math.floor(seconds / 60), s = seconds % 60;
+    timerEl.innerText = `${m}:${s.toString().padStart(2, "0")}`;
+    if (seconds <= 0) { clearInterval(interval); timerEl.innerText = "Expired"; }
+  }, 1000);
 
-    if (!data.gmail || !data.otp) {
-        error.innerText = "All fields required";
-        return;
-    }
+  async function verifyOTP() {
+    const errorEl = document.getElementById("error");
+    const btn = document.getElementById("verifyBtn");
+    errorEl.innerText = "";
+
+    const otp = Array.from(inputs).map(i => i.value).join("");
+    if (otp.length < 6) { errorEl.innerText = "Please enter all 6 digits."; return; }
+
+    const data = { otp };
+    if (type === "email") data.gmail = localStorage.getItem("verifyEmail");
+    else data.mobileno = localStorage.getItem("verifyMobile");
+
+    btn.disabled = true; btn.innerText = "Verifying...";
 
     try {
-        let res = await fetch("http://localhost:3080/user/otp-verify", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
-        });
-
-        let result = await res.json();
-   
-          console.log(result)
-        if (res.ok) {
-            alert("OTP verified, now login");
-
-            window.location.href = "login.html";
-        } else {
-            error.innerText = result.message;
-        }
-
-    } catch (err) {
-        console.log(err);
-        error.innerText = "Something went wrong";
-    }
-}
-
+      const res = await fetch("http://localhost:3080/user/otp-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      if (res.ok) {
+        clearInterval(interval);
+        localStorage.clear();
+        window.location.href = "login.html";
+      } else {
+        errorEl.innerText = result.message;
+        inputs.forEach(i => { i.value = ""; i.classList.remove("filled"); });
+        inputs[0].focus();
+      }
+    } catch { errorEl.innerText = "Something went wrong. Try again."; }
+    finally { btn.disabled = false; btn.innerText = "Verify OTP →"; }
+  }
 </script>
 
 </body>

@@ -1,8 +1,9 @@
-let mongoose =require("mongoose");
+let mongoose = require("mongoose");
 
 mongoose.set("strictQuery", true);
 
 let loginSchema = new mongoose.Schema({
+
   name: {
     type: String,
     required: true
@@ -12,36 +13,38 @@ let loginSchema = new mongoose.Schema({
 
   gmail: {
     type: String,
-    required: true,
-    unique: true,
     lowercase: true,
+    unique: true,
+    sparse: true, // 🔥 allows null for phone users
     match: /^\S+@\S+\.\S+$/
   },
 
   mobileno: {
     type: String,
-    required: true,
+    unique: true,
+    sparse: true, // 🔥 allows null for email users
     match: /^[0-9]{10}$/
   },
 
   password: {
     type: String,
     required: true,
-    minlength: 8,
-    match: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/
+    minlength: 8
   },
 
-  // 🔥 FIXED STRUCTURE
+  // 🔐 OTP system
   otp: String,
   otpExpires: Date,
 
+  // ✅ verification
   isVerified: {
     type: Boolean,
     default: false
-  }
-});
+  },
 
-let loginModel =mongoose.model("loginModel",loginSchema); // create collection for login with ame as loginModel
+  // 🕒 timestamps (very useful)
+}, { timestamps: true });
 
-module.exports =loginModel;
+let loginModel = mongoose.model("loginModel", loginSchema);
 
+module.exports = loginModel;

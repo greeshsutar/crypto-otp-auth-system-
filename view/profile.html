@@ -2,13 +2,268 @@
 <html>
 <head>
   <title>Profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #f0ede8;
+      --white:    #ffffff;
+      --border:   #e4e0da;
+      --text:     #18181b;
+      --muted:    #9a9590;
+      --soft:     #f7f5f2;
+      --indigo:   #4f46e5;
+      --indigo-l: #eef2ff;
+      --green:    #16a34a;
+      --green-l:  #dcfce7;
+      --r:        18px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 3rem 1rem;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      animation: rise 0.5s cubic-bezier(.22,1,.36,1) both;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── TOPBAR ─── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.25rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .brand-icon {
+      width: 34px; height: 34px;
+      background: var(--indigo);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cabinet Grotesk', sans-serif;
+      font-size: 1rem; font-weight: 800;
+      color: #fff;
+    }
+
+    .brand-name {
+      font-family: 'Cabinet Grotesk', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .btn-logout {
+      padding: 7px 16px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #e53e3e;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    .btn-logout:hover { background: #fff5f5; border-color: #fca5a5; }
+    .btn-logout:active { transform: scale(0.97); }
+
+    /* ─── HERO CARD ─── */
+    .hero {
+      background: var(--text);
+      border-radius: var(--r);
+      padding: 2rem 1.75rem;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    /* decorative blobs */
+    .hero::before, .hero::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .hero::before {
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%);
+      right: -40px; top: -60px;
+    }
+    .hero::after {
+      width: 140px; height: 140px;
+      background: radial-gradient(circle, rgba(167,139,250,0.2) 0%, transparent 70%);
+      right: 60px; bottom: -50px;
+    }
+
+    .avatar {
+      flex-shrink: 0;
+      width: 68px; height: 68px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cabinet Grotesk', sans-serif;
+      font-size: 1.6rem; font-weight: 800;
+      color: #fff;
+      position: relative; z-index: 1;
+      border: 3px solid rgba(255,255,255,0.15);
+    }
+
+    .hero-info { position: relative; z-index: 1; }
+
+    .hero-name {
+      font-family: 'Cabinet Grotesk', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.02em;
+      margin-bottom: 3px;
+    }
+
+    .hero-email {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 10px;
+    }
+
+    .verified-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(22,163,74,0.2);
+      border: 1px solid rgba(22,163,74,0.35);
+      color: #4ade80;
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    .verified-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #4ade80;
+    }
+
+    /* ─── INFO CARDS ─── */
+    .info-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .info-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .info-card:hover {
+      border-color: #c7c3bc;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+
+    .info-icon {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .icon-blue   { background: #eff6ff; }
+    .icon-purple { background: #f5f3ff; }
+    .icon-teal   { background: #f0fdfa; }
+
+    .info-text { display: flex; flex-direction: column; gap: 2px; }
+
+    .info-label {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .info-value {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .info-value.empty { color: var(--muted); font-weight: 400; }
+
+    /* ─── LOADING ─── */
+    .loading {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+      padding: 3rem 0;
+    }
+    .dots { display: inline-flex; gap: 5px; margin-top: 10px; }
+    .dots span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--muted);
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink {
+      0%,80%,100% { opacity:0.2; transform:scale(0.75); }
+      40%          { opacity:1;   transform:scale(1); }
+    }
+  </style>
 </head>
 <body>
 
-<h1>User Profile</h1>
+<div class="wrapper">
 
-<div id="profile"></div>
-<button onclick="logout()">Logout</button>
+  <!-- topbar -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon">V</div>
+      <span class="brand-name">Verith</span>
+    </div>
+    <button class="btn-logout" onclick="logout()">Log out</button>
+  </div>
+
+  <!-- profile injected here -->
+  <div id="profile">
+    <div class="loading">
+      Fetching your profile
+      <div class="dots"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+</div>
+
 <script>
 async function getProfile() {
   const token = localStorage.getItem("token");
@@ -20,24 +275,66 @@ async function getProfile() {
     return;
   }
 
-  document.getElementById("profile").innerText = "Loading...";
-
   try {
     const res = await fetch("http://localhost:3080/user/profile", {
       method: "GET",
-      headers: {
-        Authorization: "Bearer " + token
-      }
+      headers: { Authorization: "Bearer " + token }
     });
 
     const data = await res.json();
-  console.log(data);
+    console.log(data);
+
     if (res.ok) {
+
+      const fullName  = (data.name || "") + (data.lastname ? " " + data.lastname : "");
+      const initials  = fullName.trim().split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) || "?";
+      const email     = data.gmail    || null;
+      const mobile    = data.mobileno || null;
+
       document.getElementById("profile").innerHTML = `
-        <p>Name: ${data.name}</p>
-        <p>Email: ${data.gmail}</p>
-        <p>Mobile: ${data.mobileno}</p>
+
+        <!-- hero card -->
+        <div class="hero">
+          <div class="avatar">${initials}</div>
+          <div class="hero-info">
+            <div class="hero-name">${fullName || "—"}</div>
+            <div class="hero-email">${email || mobile || "—"}</div>
+            <div class="verified-badge">
+              <span class="verified-dot"></span> Verified
+            </div>
+          </div>
+        </div>
+
+        <!-- info cards -->
+        <div class="info-grid">
+
+          <div class="info-card">
+            <div class="info-icon icon-blue">👤</div>
+            <div class="info-text">
+              <span class="info-label">Full Name</span>
+              <span class="info-value ${fullName ? '' : 'empty'}">${fullName || "—"}</span>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <div class="info-icon icon-purple">✉️</div>
+            <div class="info-text">
+              <span class="info-label">Email Address</span>
+              <span class="info-value ${email ? '' : 'empty'}">${email || "—"}</span>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <div class="info-icon icon-teal">📱</div>
+            <div class="info-text">
+              <span class="info-label">Mobile Number</span>
+              <span class="info-value ${mobile ? '' : 'empty'}">${mobile || "—"}</span>
+            </div>
+          </div>
+
+        </div>
       `;
+
     } else {
       alert("Unauthorized, please login again");
       localStorage.removeItem("token");
@@ -54,6 +351,7 @@ function logout() {
   localStorage.removeItem("token");
   window.location.href = "login.html";
 }
+
 getProfile();
 </script>
 

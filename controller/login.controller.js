@@ -2,54 +2,98 @@ const loginModel = require("../model/loginmodel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const transporter = require("../utils/email");
+const client = require("../utils/sms");
 
 // 🔥 Generate OTP
 function generateotp() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// ✅ CREATE USER + SEND OTP
+// ================== SIGNUP ==================
 async function createlogin(req, res) {
     try {
-        let { name, lastname, gmail, mobileno, password } = req.body;
+        let { name, lastname, gmail, mobileno, password, method } = req.body;
 
-        // check existing user
-        let existingUser = await loginModel.findOne({ gmail });
+        if (!name || !password || !method) {
+            return res.status(400).send({ message: "Required fields missing" });
+        }
+
+        // 🔥 check existing user safely
+        let query = [];
+        if (gmail) query.push({ gmail });
+        if (mobileno) query.push({ mobileno });
+
+        let existingUser = await loginModel.findOne({ $or: query });
+
         if (existingUser) {
             return res.status(400).send({ message: "User already exists" });
         }
 
-        // hash password
+        // 🔐 hash password
         let hashedpassword = await bcrypt.hash(password, 10);
 
-        // generate OTP
+        // 🔢 generate OTP
         let otp = generateotp();
 
-        // create user
-        let user = await loginModel.create({
+        // 🔥 prepare user data cleanly
+        let userData = {
             name,
             lastname,
-            gmail,
-            mobileno,
             password: hashedpassword,
             otp,
             otpExpires: Date.now() + 5 * 60 * 1000,
             isVerified: false
-        });
+        };
 
-        // send email
-        try {
-            await transporter.sendMail({
-                from: process.env.EMAIL_USER,
-                to: gmail,
-                subject: "OTP Verification",
-                text: `Your OTP is ${otp}`
-            });
-        } catch (err) {
-            console.log("Email sending failed:", err.message);
+        if (method === "email") {
+            if (!gmail) {
+                return res.status(400).send({ message: "Email required" });
+            }
+            userData.gmail = gmail;
+        } else {
+            if (!mobileno) {
+                return res.status(400).send({ message: "Mobile required" });
+            }
+            userData.mobileno = mobileno;
         }
 
-        res.status(201).send({ message: "User created. OTP sent to email" });
+        let user = await loginModel.create(userData);
+
+        // 🔥 format phone safely
+        let formattedNumber = mobileno
+            ? mobileno.startsWith("+91")
+                ? mobileno
+                : `+91${mobileno}`
+            : null;
+
+        // 🔥 send OTP (safe)
+        try {
+            if (method === "phone") {
+                console.log("PHONE OTP:", otp);
+
+                // await client.messages.create({
+                //     body: `Your OTP is ${otp}`,
+                //     from: process.env.TWILIO_PHONE,
+                //     to: formattedNumber
+                // });
+
+            } else {
+                console.log("EMAIL OTP:", otp);
+
+                await transporter.sendMail({
+                    from: process.env.EMAIL_USER,
+                    to: gmail,
+                    subject: "OTP Verification",
+                    text: `Your OTP is ${otp}`
+                });
+            }
+        } catch (err) {
+            console.log("OTP sending failed:", err.message);
+        }
+
+        res.status(201).send({
+            message: `User created. OTP sent via ${method}`
+        });
 
     } catch (err) {
         console.error(err);
@@ -58,16 +102,24 @@ async function createlogin(req, res) {
 }
 
 
-// ✅ VERIFY OTP
+// ================== VERIFY OTP ==================
 async function verifyotp(req, res) {
     try {
-        let { gmail, otp } = req.body;
+        let { gmail, mobileno, otp } = req.body;
 
-        if (!otp || !gmail) {
-            return res.status(400).send({ message: "OTP and email required" });
+        if (!otp) {
+            return res.status(400).send({ message: "OTP required" });
         }
 
-        let user = await loginModel.findOne({ gmail });
+        let user;
+
+        if (gmail) {
+            user = await loginModel.findOne({ gmail });
+        } else if (mobileno) {
+            user = await loginModel.findOne({ mobileno });
+        } else {
+            return res.status(400).send({ message: "Email or mobile required" });
+        }
 
         if (!user) {
             return res.status(400).send({ message: "User not found" });
@@ -81,7 +133,6 @@ async function verifyotp(req, res) {
             return res.status(400).send({ message: "OTP expired" });
         }
 
-        // mark verified
         user.isVerified = true;
         user.otp = null;
         user.otpExpires = null;
@@ -97,23 +148,25 @@ async function verifyotp(req, res) {
 }
 
 
-// ✅ LOGIN (ONLY VERIFIED USERS)
+// ================== LOGIN ==================
 async function reallogin(req, res) {
     try {
-        let { gmail, password } = req.body;
+        let { gmail, mobileno, password } = req.body;
 
-        if (!gmail || !password) {
-            return res.status(400).send({ message: "All fields required" });
+        if (!password) {
+            return res.status(400).send({ message: "Password required" });
         }
 
-        let user = await loginModel.findOne({ gmail });
+        let query = {};
+        if (gmail) query.gmail = gmail;
+        if (mobileno) query.mobileno = mobileno;
 
-        // 🔥 FIRST check user exists
+        let user = await loginModel.findOne(query);
+
         if (!user) {
             return res.status(400).send({ message: "User not found" });
         }
 
-        // 🔥 THEN check OTP verified
         if (!user.isVerified) {
             return res.status(400).send({ message: "Please verify OTP first" });
         }
@@ -125,7 +178,7 @@ async function reallogin(req, res) {
         }
 
         let token = jwt.sign(
-            { id: user._id, gmail: user.gmail },
+            { id: user._id },
             process.env.JWT_SECRET,
             { expiresIn: "1h" }
         );
@@ -142,7 +195,7 @@ async function reallogin(req, res) {
 }
 
 
-// ✅ PROFILE
+// ================== PROFILE ==================
 async function getProfile(req, res) {
     try {
         const userId = req.user.id;
@@ -150,10 +203,6 @@ async function getProfile(req, res) {
         const user = await loginModel
             .findById(userId)
             .select("-password");
-
-        if (!user) {
-            return res.status(404).send({ message: "User not found" });
-        }
 
         res.status(200).send(user);
 

@@ -1,74 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Signup</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up — Verifi</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-<div>
-    <h1>Signup</h1>
+<div class="split-layout">
 
-    <form id="form">
-        <input id="name" type="text" placeholder="name" required>
-        <input id="lastname" type="text" placeholder="lastname" required>
-        <input id="gmail" type="email" placeholder="email" required>
-        <input id="mobileno" type="tel" placeholder="mobile number" required>
-        <input id="password" type="password" placeholder="password" required>
-          <p id="error" style="color:red;"></p>
-        <button type="submit">Submit</button>
-    </form>
+  <!-- LEFT PANEL -->
+  <div class="split-left">
+    <div class="brand">
+      <div class="brand-icon">V</div>
+      <span class="brand-name">Verifi</span>
+    </div>
+    <div class="left-content">
+      <h2>Auth that<br>actually<br><span>works.</span></h2>
+      <p>Sign up and verify your identity in just a few steps. Simple and secure.</p>
+    </div>
+    <div class="steps">
+      <div class="step active"><div class="step-num">1</div><span class="step-label">Create your account</span></div>
+      <div class="step">       <div class="step-num">2</div><span class="step-label">Verify via OTP</span></div>
+      <div class="step">       <div class="step-num">3</div><span class="step-label">Log in &amp; explore</span></div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="split-right">
+    <div class="form-wrap">
+      <p class="form-title">Create account</p>
+      <p class="form-sub">Fill in your details to get started.</p>
+
+      <form id="form">
+        <div class="row-2">
+          <div class="field">
+            <label>First Name</label>
+            <input id="name" type="text" placeholder="John" required/>
+          </div>
+          <div class="field">
+            <label>Last Name</label>
+            <input id="lastname" type="text" placeholder="Doe"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Verify via</label>
+          <select id="method" onchange="toggleField()">
+            <option value="email">Email OTP</option>
+            <option value="phone">SMS OTP</option>
+          </select>
+        </div>
+
+        <div class="field" id="emailField">
+          <label>Email Address</label>
+          <input id="gmail" type="email" placeholder="john@example.com"/>
+        </div>
+
+        <div class="field" id="phoneField" style="display:none;">
+          <label>Mobile Number</label>
+          <input id="mobileno" type="tel" placeholder="10-digit number"/>
+        </div>
+
+        <div class="field">
+          <label>Password</label>
+          <div class="pw-wrap">
+            <input id="password" type="password" placeholder="Min 8 chars, A-Z, 0-9, symbol" required/>
+            <button type="button" class="eye-btn" id="togglePw">👁</button>
+          </div>
+        </div>
+
+        <p class="error-msg" id="error"></p>
+        <button type="submit" id="btn" class="btn-primary">Create Account →</button>
+      </form>
+
+      <p class="footer-link">Already have an account? <a href="login.html">Log in</a></p>
+    </div>
+  </div>
+
 </div>
 
 <script>
-const form = document.getElementById("form");
+  function toggleField() {
+    const method = document.getElementById("method").value;
+    const emailField = document.getElementById("emailField");
+    const phoneField = document.getElementById("phoneField");
+    const emailInput = document.getElementById("gmail");
+    const phoneInput = document.getElementById("mobileno");
+    if (method === "email") {
+      emailField.style.display = "block"; phoneField.style.display = "none";
+      emailInput.required = true; phoneInput.required = false;
+    } else {
+      emailField.style.display = "none"; phoneField.style.display = "block";
+      emailInput.required = false; phoneInput.required = true;
+    }
+  }
 
-form.addEventListener("submit", async function(e) {
+  document.getElementById("togglePw").addEventListener("click", () => {
+    const pw = document.getElementById("password");
+    pw.type = pw.type === "password" ? "text" : "password";
+  });
+
+  const form = document.getElementById("form");
+  const btn  = document.getElementById("btn");
+
+  form.addEventListener("submit", async function(e) {
     e.preventDefault();
-
-    let errorEl = document.getElementById("error");
+    const errorEl = document.getElementById("error");
     errorEl.innerText = "";
+    btn.disabled = true; btn.innerText = "Creating account...";
 
+    const method = document.getElementById("method").value;
     const data = {
-        name: document.getElementById("name").value,
-        lastname: document.getElementById("lastname").value,
-        gmail: document.getElementById("gmail").value,
-        mobileno: document.getElementById("mobileno").value,
-        password: document.getElementById("password").value
+      name:     document.getElementById("name").value,
+      lastname: document.getElementById("lastname").value,
+      password: document.getElementById("password").value,
+      method
     };
 
-    try {
-        const res = await fetch("http://localhost:3080/user/signup", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
-        });
-
-        const result = await res.json();
-     
-
-console.log(result); // ✅ keep this
-
-if (res.ok) {
-    alert(result.message);
-
-    // 🔥 STORE EMAIL
-    localStorage.setItem("verifyEmail", data.gmail);
-
-    form.reset();
-
-    window.location.href = "otp-verify.html";
-} else {
-    errorEl.innerText = result.message;
-}
-
-    } catch (error) {
-        console.error(error);
-        errorEl.innerText = "Something went wrong";
+    if (method === "email") {
+      data.gmail = document.getElementById("gmail").value;
+      if (!data.gmail) { errorEl.innerText = "Email is required."; btn.disabled = false; btn.innerText = "Create Account →"; return; }
+    } else {
+      data.mobileno = document.getElementById("mobileno").value;
+      if (!data.mobileno) { errorEl.innerText = "Mobile number is required."; btn.disabled = false; btn.innerText = "Create Account →"; return; }
     }
-});
+
+    try {
+      const res = await fetch("http://localhost:3080/user/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      if (res.ok) {
+        localStorage.setItem("verifyType", method);
+        if (method === "email") localStorage.setItem("verifyEmail", data.gmail);
+        else localStorage.setItem("verifyMobile", data.mobileno);
+        form.reset();
+        window.location.href = "otp-verify.html";
+      } else { errorEl.innerText = result.message; }
+    } catch { errorEl.innerText = "Something went wrong. Try again."; }
+    finally { btn.disabled = false; btn.innerText = "Create Account →"; }
+  });
 </script>
 
 </body>

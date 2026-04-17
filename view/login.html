@@ -1,75 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Log In — Verifi</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-    <div>
-        <div><h1>Login</h1>
-        </div>
-        <form id="form">
-    <input id="email" type="email" placeholder="enter you email">
-    <input id="password" type="password" placeholder="enter you password">
-    <p id="error" style="color:red;"></p>
-    <button id="btn" type="submit">Submit</button>
-     
-        </form>
 
+<div class="split-layout">
+
+  <!-- LEFT PANEL -->
+  <div class="split-left">
+    <div class="brand">
+      <div class="brand-icon">V</div>
+      <span class="brand-name">Verifi</span>
     </div>
+    <div class="left-content">
+      <h2>Welcome<br><span>back.</span></h2>
+      <p>Log in to access your account. You're just one step away.</p>
+    </div>
+    <div class="steps">
+      <div class="step done">  <div class="step-num">✓</div><span class="step-label">Account created</span></div>
+      <div class="step done">  <div class="step-num">✓</div><span class="step-label">OTP verified</span></div>
+      <div class="step active"><div class="step-num">3</div><span class="step-label">Log in &amp; explore</span></div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="split-right">
+    <div class="form-wrap">
+      <p class="form-title">Welcome back</p>
+      <p class="form-sub">Enter your email or phone and password to continue.</p>
+
+      <form id="form">
+        <div class="field">
+          <label>Email or Phone</label>
+          <input id="identifier" type="text" placeholder="john@example.com or 9876543210" autocomplete="username"/>
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <div class="pw-wrap">
+            <input id="password" type="password" placeholder="Your password" autocomplete="current-password"/>
+            <button type="button" class="eye-btn" id="togglePw">👁</button>
+          </div>
+        </div>
+
+        <p class="error-msg" id="error"></p>
+        <button type="submit" id="btn" class="btn-primary">Log In →</button>
+      </form>
+
+      <p class="footer-link">Don't have an account? <a href="Signup.html">Sign up</a></p>
+    </div>
+  </div>
+
+</div>
+
 <script>
-const form = document.getElementById("form");
+  document.getElementById("togglePw").addEventListener("click", () => {
+    const pw = document.getElementById("password");
+    pw.type = pw.type === "password" ? "text" : "password";
+  });
 
-form.addEventListener("submit", async function(e){
+  const form = document.getElementById("form");
+  const btn  = document.getElementById("btn");
+
+  form.addEventListener("submit", async function(e) {
     e.preventDefault();
-
-    let errorEl = document.getElementById("error");
+    const errorEl = document.getElementById("error");
     errorEl.innerText = "";
+    btn.disabled = true; btn.innerText = "Logging in...";
 
-    let data = {
-        gmail: document.getElementById("email").value,
-        password: document.getElementById("password").value
-    };
+    const value    = document.getElementById("identifier").value.trim();
+    const password = document.getElementById("password").value.trim();
 
-    console.log(data);
-    // ✅ Basic validation
-    if (!data.gmail || !data.password) {
-        errorEl.innerText = "All fields are required";
-        return;
+    if (!value || !password) {
+      errorEl.innerText = "All fields are required.";
+      btn.disabled = false; btn.innerText = "Log In →";
+      return;
     }
 
-    try{
-        let req = await fetch("http://localhost:3080/user/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
-        });
+    const data = { password };
+    const isEmail = /^\S+@\S+\.\S+$/.test(value);
+    if (isEmail) { data.gmail = value; }
+    else { data.mobileno = value.replace("+91", "").trim(); }
 
-        const result = await req.json();
-
-        if (req.ok) {
-            // 🔥 store token
-            localStorage.setItem("token", result.token);
-
-            alert("Login successful"); // ✅ show first
-
-            form.reset();
-
-            // 🔥 redirect after
-            window.location.href = "profile.html";
-
-        } else {
-            errorEl.innerText = result.message;
-        }
-
-    } catch(err){
-        console.log("Error in login", err);
-        errorEl.innerText = "Something went wrong";
-    }
-});
+    try {
+      const req = await fetch("http://localhost:3080/user/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const result = await req.json();
+      if (req.ok) {
+        localStorage.setItem("token", result.token);
+        window.location.href = "profile.html";
+      } else { errorEl.innerText = result.message; }
+    } catch { errorEl.innerText = "Something went wrong. Try again."; }
+    finally { btn.disabled = false; btn.innerText = "Log In →"; }
+  });
 </script>
+
 </body>
 </html>
