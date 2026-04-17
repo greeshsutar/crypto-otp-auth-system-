@@ -276,7 +276,7 @@ async function getProfile() {
   }
 
   try {
-    const res = await fetch("http://localhost:3080/user/profile", {
+    const res = await fetch("https://crypto-otp-auth-system.onrender.com/user/profile", {
       method: "GET",
       headers: { Authorization: "Bearer " + token }
     });

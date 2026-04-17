@@ -86,7 +86,7 @@
     else { data.mobileno = value.replace("+91", "").trim(); }
 
     try {
-      const req = await fetch("http://localhost:3080/user/login", {
+      const req = await fetch("https://crypto-otp-auth-system.onrender.com/user/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
