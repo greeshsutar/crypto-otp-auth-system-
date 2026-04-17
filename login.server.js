@@ -5,16 +5,18 @@ let Routing = require("./router/login.route");
 require("dotenv").config();
 // instance entire application 
 let app = express(); //create
+app.use(cors());
+app.use(express.json());
 let authMiddleware = require("./auth/auth");
 const { getProfile } = require("./controller/login.controller");
 
-app.use(express.json());
+
 // middleware body parsing 
 app.get("/user/profile", authMiddleware, getProfile);
 
 
 //cors
-app.use(cors());
+
 
 
 //route
@@ -29,9 +31,9 @@ app.use((err, req, res, next) => {
 app.get("/",(req,res)=>{
    res.send("Hello How are You")
 })
-let PORT =process.env.PORT;
+const PORT = process.env.PORT || 3080;
 MongoConnect().then(() => {
-  app.listen(3080, () => {
-    console.log("Server running on port 3080");
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
   });
 });
