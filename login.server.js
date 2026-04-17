@@ -20,7 +20,7 @@ Routing(app);
 
 // root route
 app.get("/", (req, res) => {
-   res.send("Hello How are You");
+   res.sendFile(path.join(__dirname, "view", "Signup.html"));
 });
 
 // error handler
