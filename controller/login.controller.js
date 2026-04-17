@@ -18,7 +18,7 @@ async function createlogin(req, res) {
             return res.status(400).send({ message: "Required fields missing" });
         }
 
-        // 🔥 check existing user safely
+        // 🔍 check existing user
         let query = [];
         if (gmail) query.push({ gmail });
         if (mobileno) query.push({ mobileno });
@@ -35,12 +35,15 @@ async function createlogin(req, res) {
         // 🔢 generate OTP
         let otp = generateotp();
 
-        // 🔥 prepare user data cleanly
+        // 🔐 hash OTP
+        let hashedOtp = await bcrypt.hash(otp, 10);
+
+        // 🧾 prepare user data
         let userData = {
             name,
             lastname,
             password: hashedpassword,
-            otp,
+            otp: hashedOtp,
             otpExpires: Date.now() + 5 * 60 * 1000,
             isVerified: false
         };
@@ -59,23 +62,23 @@ async function createlogin(req, res) {
 
         let user = await loginModel.create(userData);
 
-        // 🔥 format phone safely
+        // 📱 format phone
         let formattedNumber = mobileno
             ? mobileno.startsWith("+91")
                 ? mobileno
                 : `+91${mobileno}`
             : null;
 
-        // 🔥 send OTP (safe)
+        // 📤 send OTP
         try {
             if (method === "phone") {
                 console.log("PHONE OTP:", otp);
 
-                // await client.messages.create({
-                //     body: `Your OTP is ${otp}`,
-                //     from: process.env.TWILIO_PHONE,
-                //     to: formattedNumber
-                // });
+                await client.messages.create({
+                    body: `Your OTP is ${otp}`,
+                    from: process.env.TWILIO_PHONE,
+                    to: formattedNumber
+                });
 
             } else {
                 console.log("EMAIL OTP:", otp);
@@ -101,7 +104,6 @@ async function createlogin(req, res) {
     }
 }
 
-
 // ================== VERIFY OTP ==================
 async function verifyotp(req, res) {
     try {
@@ -125,14 +127,19 @@ async function verifyotp(req, res) {
             return res.status(400).send({ message: "User not found" });
         }
 
-        if (user.otp !== otp) {
-            return res.status(400).send({ message: "Invalid OTP" });
-        }
-
+        // check expiry
         if (user.otpExpires < Date.now()) {
             return res.status(400).send({ message: "OTP expired" });
         }
 
+        //  compare hashed OTP
+        const isMatch = await bcrypt.compare(otp, user.otp);
+
+        if (!isMatch) {
+            return res.status(400).send({ message: "Invalid OTP" });
+        }
+
+        // 
         user.isVerified = true;
         user.otp = null;
         user.otpExpires = null;
@@ -146,7 +153,6 @@ async function verifyotp(req, res) {
         res.status(500).send({ message: "Server error" });
     }
 }
-
 
 // ================== LOGIN ==================
 async function reallogin(req, res) {
@@ -194,7 +200,6 @@ async function reallogin(req, res) {
     }
 }
 
-
 // ================== PROFILE ==================
 async function getProfile(req, res) {
     try {
@@ -211,7 +216,6 @@ async function getProfile(req, res) {
         res.status(500).send({ message: "Server error" });
     }
 }
-
 
 module.exports = {
     createlogin,
